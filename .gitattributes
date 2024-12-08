@@ -1,0 +1,4 @@
+*.pkl filter=lfs diff=lfs merge=lfs -text
+models/model_1_5_2.pkl filter=lfs diff=lfs merge=lfs -text
+models/nb_model.pkl filter=lfs diff=lfs merge=lfs -text
+models/vectorizer_model.pkl filter=lfs diff=lfs merge=lfs -text 
