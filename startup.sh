@@ -5,6 +5,15 @@ set -x
 
 echo "Starting deployment script..."
 
+# Create and activate virtual environment
+echo "Setting up virtual environment..."
+python -m venv antenv
+source antenv/bin/activate
+
+# Install dependencies
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
 # Download model from Azure Blob Storage
 echo "Downloading model..."
 python manage.py shell -c "from core.livenews.model_utils import download_model_from_blob; download_model_from_blob()"
