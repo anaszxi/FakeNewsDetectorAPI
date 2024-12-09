@@ -11,4 +11,4 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 
 # Start Gunicorn
-gunicorn --bind=0.0.0.0:8000 FakeNewsDetectorAPI.wsgi:application 
+gunicorn --bind=0.0.0.0:8000 FakeNewsDetectorAPI.wsgi:application
