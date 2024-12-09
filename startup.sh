@@ -5,10 +5,16 @@ set -x
 
 echo "Starting deployment script..."
 
-# Create and activate virtual environment
+# Create and activate virtual environment (cross-platform)
 echo "Setting up virtual environment..."
 python -m venv antenv
-source antenv/bin/activate
+if [ -f antenv/Scripts/activate ]; then
+    # Windows
+    . antenv/Scripts/activate
+else
+    # Linux/Mac
+    . antenv/bin/activate
+fi
 
 # Install dependencies
 echo "Installing dependencies..."
