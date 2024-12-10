@@ -68,7 +68,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
     "https://fake-news-detector-service.azurewebsites.net",
-    "https://fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
