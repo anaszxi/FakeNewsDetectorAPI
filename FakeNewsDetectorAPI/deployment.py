@@ -6,8 +6,17 @@ import os
 from .settings import *  # This imports all settings from settings.py
 
 # Configure the domain name using the environment variable
-ALLOWED_HOSTS = [os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.environ else []
-CSRF_TRUSTED_ORIGINS = ['https://' + os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.environ else []
+ALLOWED_HOSTS = [
+    'fake-news-detector-service.azurewebsites.net',
+    'fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net',
+    'localhost',
+    '127.0.0.1'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://fake-news-detector-service.azurewebsites.net',
+    'https://fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net'
+]
 
 # WhiteNoise configuration
 MIDDLEWARE = [
