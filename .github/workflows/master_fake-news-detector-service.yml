@@ -65,5 +65,4 @@ jobs:
         id: deploy-to-webapp
         with:
           app-name: 'fake-news-detector-service'
-          slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_01536D676D034CF19CD7D42FD1F7AB61 }}
