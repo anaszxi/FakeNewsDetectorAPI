@@ -35,20 +35,22 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+
 # Configure MySQL database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ['AZURE_MYSQL_NAME'],
-        'HOST': os.environ['AZURE_MYSQL_HOST'],
-        'USER': os.environ['AZURE_MYSQL_USER'],
-        'PASSWORD': os.environ['AZURE_MYSQL_PASSWORD'],
+        'NAME': os.environ.get('AZURE_MYSQL_NAME', 'fake-news-detector-service-dbb'),
+        'USER': os.environ.get('AZURE_MYSQL_USER', 'dbbadmin'),
+        'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
+        'HOST': os.environ.get('AZURE_MYSQL_HOST', 'fake-news-detector-service-dbb.mysql.database.azure.com'),
+        'PORT': '3306',
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'ssl': {'ssl-mode': 'preferred'}
+            'ssl': {'ssl-mode': 'require'}
         }
     }
 }
+
 
 # Azure Blob Storage Settings
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
