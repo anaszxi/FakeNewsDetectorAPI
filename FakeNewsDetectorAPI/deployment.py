@@ -8,14 +8,13 @@ from .settings import *  # This imports all settings from settings.py
 # Configure the domain name using the environment variable
 ALLOWED_HOSTS = [
     'fake-news-detector-service.azurewebsites.net',
-    'fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net',
     'localhost',
     '127.0.0.1'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://fake-news-detector-service.azurewebsites.net',
-    'https://fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net'
+    
 ]
 
 # WhiteNoise configuration
@@ -68,9 +67,8 @@ CSRF_COOKIE_SECURE = True
 
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
-    # Add your mobile app's domain here
+    
     "https://fake-news-detector-service.azurewebsites.net",
-    "https://fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
