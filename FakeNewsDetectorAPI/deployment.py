@@ -60,7 +60,8 @@ CSRF_COOKIE_SECURE = True
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
     # Add your mobile app's domain here
-    "https://fake-news-detector-service.azurewebsites.net",
+    "https://fake-news-detector-service-hbf0fgccfwe0era4.westeurope-01.azurewebsites.net",
+    
 ]
 CORS_ALLOW_CREDENTIALS = True
 
