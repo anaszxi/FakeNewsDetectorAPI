@@ -28,7 +28,10 @@ jobs:
           source venv/bin/activate
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          source venv/bin/activate  # Activate virtual environment before installing
+          pip install --upgrade pip
+          pip install -r requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
@@ -38,7 +41,7 @@ jobs:
           python manage.py collectstatic --noinput
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -r release.zip ./* -x "venv/*" "*.git*" "*.github/*"
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
