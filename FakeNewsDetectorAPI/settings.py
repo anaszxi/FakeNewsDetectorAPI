@@ -119,3 +119,8 @@ NEWS_FETCH_LIMIT = 10
 # Timezone settings
 USE_TZ = True
 TIME_ZONE = 'UTC'
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
