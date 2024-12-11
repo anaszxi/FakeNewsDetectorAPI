@@ -4,7 +4,7 @@ Azure deployment settings for FakeNewsDetectorAPI
 
 import os
 from .settings import *  # This imports all settings from settings.py
-
+print("Loading deployment.py")
 # Configure the domain name using the environment variable
 ALLOWED_HOSTS = [
     'fakenews.azurewebsites.net',
