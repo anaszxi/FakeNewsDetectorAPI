@@ -19,6 +19,7 @@ ALLOWED_HOSTS = ['fake-news.azurewebsites.net','localhost', '127.0.0.1']
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
+    'django.contrib.auth',
     'rest_framework',
     'core.livenews',
     'core.newsquiz',
