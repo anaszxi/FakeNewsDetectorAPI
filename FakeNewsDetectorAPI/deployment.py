@@ -45,11 +45,8 @@ DATABASES = {
     }
 }
 
-# Azure Blob Storage Settings
-AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
-AZURE_STORAGE_CONTAINER_NAME = 'models'
-MODEL_BLOB_NAME = 'model_1_5_2.pkl'
-LOCAL_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model_1_5_2.pkl')
+
+
 
 # SECURITY SETTINGS
 DEBUG = False
