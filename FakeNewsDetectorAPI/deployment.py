@@ -5,6 +5,7 @@ Azure deployment settings for FakeNewsDetectorAPI
 import os
 from .settings import *  # This imports all settings from settings.py
 print("Loading deployment.py")
+
 # Configure the domain name using the environment variable
 ALLOWED_HOSTS = [
     'fake-news-app22.azurewebsites.net',
@@ -14,7 +15,6 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://fake-news-app22.azurewebsites.net',
-    
 ]
 
 # WhiteNoise configuration
@@ -30,12 +30,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Configure static files for production
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
 # Configure MySQL database
 DATABASES = {
     'default': {
@@ -50,7 +44,6 @@ DATABASES = {
         }
     }
 }
-
 
 # Azure Blob Storage Settings
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
@@ -69,7 +62,6 @@ CSRF_COOKIE_SECURE = True
 
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
-    
     "https://fake-news-app22.azurewebsites.net",
 ]
 CORS_ALLOW_CREDENTIALS = True
