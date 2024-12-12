@@ -7,13 +7,13 @@ from .settings import *  # This imports all settings from settings.py
 print("Loading deployment.py")
 # Configure the domain name using the environment variable
 ALLOWED_HOSTS = [
-    'fakenews.azurewebsites.net',
+    'fake-news-app22.azurewebsites.net',
     'localhost',
     '127.0.0.1'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://fakenews.azurewebsites.net',
+    'https://fake-news-app22.azurewebsites.net',
     
 ]
 
@@ -70,7 +70,7 @@ CSRF_COOKIE_SECURE = True
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
     
-    "https://fakenews.azurewebsites.net",
+    "https://fake-news-app22.azurewebsites.net",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
