@@ -1,7 +1,7 @@
 import os
 import logging
 from azure.storage.blob import BlobServiceClient
-from django.conf import settings
+from core import settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from django.conf import settings
+from core import settings
 import os
 import pickle
 import logging
