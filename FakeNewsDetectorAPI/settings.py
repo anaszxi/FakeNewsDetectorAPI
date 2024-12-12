@@ -43,10 +43,13 @@ TEMPLATES = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
+    'django.middleware.security.SecurityMiddleware', 
+    'django.contrib.sessions.middleware.SessionMiddleware',  # Add this if you're using sessions
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Add this
+    'django.contrib.messages.middleware.MessageMiddleware',  # Add this if you're using messages
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Moved towards the end 
 ]
 
 # Azure Blob Storage Settings
