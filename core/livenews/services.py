@@ -1,6 +1,6 @@
 import requests
 import logging
-from django.core import settings
+from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
 from .models import LiveNews

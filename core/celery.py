@@ -1,6 +1,6 @@
 import os
 from celery import Celery
-from django.core import settings
+from django.conf import settings
 from celery.schedules import crontab
 
 # Set the default Django settings module
