@@ -17,7 +17,7 @@ python -m pip install --upgrade pip
 
 # Install dependencies
 echo "Installing dependencies..."
-pip install -r /home/site/wwwroot/requirements.txt
+pip install -r requirements.txt
 if [ $? -ne 0 ]; then
     echo "Failed to install dependencies. Exiting."
     exit 1
