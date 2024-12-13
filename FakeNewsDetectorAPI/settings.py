@@ -8,7 +8,7 @@ print("Loading settings.py")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+SECRET_KEY = "t-&trn$w7h2%wpio61zu4_i@zoec+t0y=6we(ft3h94w_i@f+"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -17,16 +17,25 @@ ALLOWED_HOSTS = ['fake-news-ab.azurewebsites.net','localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.contenttypes',
-    'django.contrib.staticfiles',
+    'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',  # Required for auth
+    'django.contrib.messages',  # Required for admin
+    'django.contrib.staticfiles',
+    # Third-party apps
     'rest_framework',
+    'corsheaders',
+    # Your apps
     'core.livenews',
     'core.newsquiz',
-    'corsheaders',
 ]
 
+
+ROOT_URLCONF = 'FakeNewsDetectorAPI.urls'
+
 # Template configuration
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -36,20 +45,26 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.contrib.auth.context_processors.auth',  # Required for admin
+                'django.contrib.messages.context_processors.messages',  # Required for admin
             ],
         },
     },
 ]
 
+
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware', 
-    'django.contrib.sessions.middleware.SessionMiddleware',  # Add this if you're using sessions
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Add this
-    'django.contrib.messages.middleware.MessageMiddleware',  # Add this if you're using messages
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Moved towards the end 
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 # Azure Blob Storage Settings
@@ -57,6 +72,9 @@ AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRIN
 AZURE_STORAGE_CONTAINER_NAME = 'models'
 MODEL_BLOB_NAME = 'model_1_5_2.pkl'
 LOCAL_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model_1_5_2.pkl')
+
+WSGI_APPLICATION = 'FakeNewsDetectorAPI.wsgi.application'
+
 
 # Database settings
 DATABASES = {
@@ -128,3 +146,5 @@ TIME_ZONE = 'UTC'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
