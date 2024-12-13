@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['fake-news-app22.azurewebsites.net','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fake-news-ab.azurewebsites.net','localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -70,7 +70,7 @@ DATABASES = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
-    "https://fake-news-app22.azurewebsites.net",
+    "https://fake-news-ab.azurewebsites.net",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
