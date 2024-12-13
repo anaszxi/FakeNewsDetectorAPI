@@ -8,14 +8,19 @@ print("Loading deployment.py")
 
 # Configure the domain name using the environment variable
 ALLOWED_HOSTS = [
-    'fake-news-ab.azurewebsites.net',
+    'fake-news-abc.azurewebsites.net',
     'localhost',
     '127.0.0.1'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://fake-news-ab.azurewebsites.net',
+    'https://fake-news-abc.azurewebsites.net',
 ]
+
+DEBUG = False
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') 
+
+
 
 # WhiteNoise configuration
 MIDDLEWARE = [
@@ -41,6 +46,7 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {
             'ssl': {'ssl-mode': 'require'}
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
     }
 }
@@ -49,7 +55,6 @@ DATABASES = {
 
 
 # SECURITY SETTINGS
-DEBUG = False
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -59,7 +64,7 @@ CSRF_COOKIE_SECURE = True
 
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
-    "https://fake-news-ab.azurewebsites.net",
+    "https://fake-news-abc.azurewebsites.net",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
