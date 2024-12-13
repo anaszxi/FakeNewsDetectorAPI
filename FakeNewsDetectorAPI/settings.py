@@ -8,12 +8,18 @@ print("Loading settings.py")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "t-&trn$w7h2%wpio61zu4_i@zoec+t0y=6we(ft3h94w_i@f+"
+# settings.py
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-dev-only-secret-key')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['fake-news-ab.azurewebsites.net','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fake-news-abc.azurewebsites.net','localhost', '127.0.0.1']
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # Application definition
 INSTALLED_APPS = [
@@ -88,7 +94,7 @@ DATABASES = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
-    "https://fake-news-ab.azurewebsites.net",
+    "https://fake-news-abc.azurewebsites.net",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
