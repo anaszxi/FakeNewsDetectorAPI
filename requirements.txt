@@ -20,5 +20,5 @@ mysqlclient==2.2.4  # MySQL client library
 django-storages[azure]==1.14.2  # For Azure Storage
 azure-storage-blob==12.19.0  # For Azure Blob Storage
 python-decouple==3.8  # For environment variables
-
+mysql-connector-python==9.1.0
 #pip install -r requirements.txt
