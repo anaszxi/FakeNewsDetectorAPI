@@ -45,12 +45,10 @@ DATABASES = {
         'HOST': os.environ.get('AZURE_MYSQL_HOST', 'fake-news-detector-service-dbb.mysql.database.azure.com'),
         'PORT': '3306',
         'OPTIONS': {
-            'ssl': {'ssl-mode': 'require'}
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+            'ssl': {'ssl-mode': 'require'},  # Removed init_command
         }
     }
 }
-
 
 
 
