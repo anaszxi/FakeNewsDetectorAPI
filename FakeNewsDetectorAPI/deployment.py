@@ -51,10 +51,10 @@ DATABASES = {
 }
 
 
-# CORS settings for your mobile app
-CORS_ALLOWED_ORIGINS = [
-    "https://fake-news-lit.azurewebsites.net",
-]
+#CORS settings for your mobile app
+#CORS_ALLOWED_ORIGINS = [
+#   "https://fake-news-lit.azurewebsites.net",
+#]
 
 # Cache settings
 CACHES = {
