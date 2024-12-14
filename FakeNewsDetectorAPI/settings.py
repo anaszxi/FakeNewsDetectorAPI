@@ -15,7 +15,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-dev-only-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['fake-news-rg.azurewebsites.net','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fake-news-len.azurewebsites.del','localhost', '127.0.0.1']
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
@@ -94,7 +94,7 @@ DATABASES = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
-    "https://fake-news-rg.azurewebsites.net",
+    "https://fake-news-len.azurewebsites.net",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
