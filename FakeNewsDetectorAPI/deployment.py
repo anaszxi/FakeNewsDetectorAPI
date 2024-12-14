@@ -44,7 +44,9 @@ DATABASES = {
         'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
         'HOST': os.environ.get('AZURE_MYSQL_HOST', 'fake-news-detector-service-dbb.mysql.database.azure.com'),
         'PORT': '3306',
-        'OPTIONS': {},
+        'OPTIONS': {
+            'ssl': {'ssl-mode': 'DISABLED'},
+        },
     }
 }
 
