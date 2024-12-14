@@ -30,10 +30,6 @@ MIDDLEWARE = [
 
 
 
-CONNECTION = os.environ['AZURE_MYSQL_CONNECTIONSTRING']
-CONNECTION_STR = {pair.split('=')[0]:pair.split('=')[1] for pair in CONNECTION.split(' ')}
-
-
 
 # Configure MySQL database
 DATABASES = {
