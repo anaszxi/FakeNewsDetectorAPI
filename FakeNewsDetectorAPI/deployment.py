@@ -32,16 +32,20 @@ MIDDLEWARE = [
 
 
 # Configure MySQL database
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('AZURE_MYSQL_NAME', 'fake-news-detector-service-dbb'),
-        'USER': os.environ.get('AZURE_MYSQL_USER', 'dbbadmin'),
-        'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
-        'HOST': os.environ.get('AZURE_MYSQL_HOST', 'fake-news-detector-service-dbb.mysql.database.azure.com'),
+        'NAME': 'mysql',  # Your database name
+        'USER': 'dbbadmin',  # Your MySQL username
+        'PASSWORD': 'd6cTQk2Na6ma7JE',  # Your MySQL password
+        'HOST': 'fake-news-detector-service-dbb.mysql.database.azure.com',  # Your MySQL server hostname
         'PORT': '3306',
         'OPTIONS': {
-            'ssl': {'ssl-mode': 'REQUIRED'},
+            'ssl': {
+                'ca': os.path.join(BASE_DIR, 'FakeNewsDetectorAPI/DigiCertGlobalRootG2.crt.pem'),
+                'ssl_disabled': False,  # Enforce SSL connection
+            }
         },
     }
 }
@@ -49,7 +53,7 @@ DATABASES = {
 
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
-    "https://fake-news-len.azurewebsites.net",
+    "https://fake-news-lit.azurewebsites.net",
 ]
 
 # Cache settings
