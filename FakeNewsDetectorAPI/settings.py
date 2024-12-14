@@ -15,11 +15,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-dev-only-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['fake-news-len.azurewebsites.del','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fake-news-len.azurewebsites.net','localhost', '127.0.0.1']
 
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 # Application definition
 INSTALLED_APPS = [
