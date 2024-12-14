@@ -9,17 +9,15 @@ print("Loading settings.py")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # settings.py
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-dev-only-secret-key')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['fake-news-len.azurewebsites.net','localhost', '127.0.0.1']
+ALLOWED_HOSTS = []
 
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -38,9 +36,26 @@ INSTALLED_APPS = [
 ]
 
 
-ROOT_URLCONF = 'FakeNewsDetectorAPI.urls'
 
-# Template configuration
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', 
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:19000",  # Expo Go for local testing
+    "http://127.0.0.1:8000",  # Local Django server
+]
+
+ROOT_URLCONF = 'FakeNewsDetectorAPI.urls'
 
 TEMPLATES = [
     {
@@ -52,32 +67,22 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.contrib.auth.context_processors.auth',  # Required for admin
-                'django.contrib.messages.context_processors.messages',  # Required for admin
+                'django.contrib.messages.context_processors.messages',   
             ],
         },
     },
 ]
 
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
 # Azure Blob Storage Settings
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
 AZURE_STORAGE_CONTAINER_NAME = 'models'
 MODEL_BLOB_NAME = 'model_1_5_2.pkl'
 LOCAL_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model_1_5_2.pkl')
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 WSGI_APPLICATION = 'FakeNewsDetectorAPI.wsgi.application'
 
@@ -90,14 +95,21 @@ DATABASES = {
     }
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:19000",  # Expo Go for local testing
-    "http://127.0.0.1:8000",  # Local Django server
-    "https://fake-news-len.azurewebsites.net",
-]
 
-CORS_ALLOW_CREDENTIALS = True
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 # Rest Framework settings
 REST_FRAMEWORK = {
@@ -150,7 +162,5 @@ TIME_ZONE = 'UTC'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

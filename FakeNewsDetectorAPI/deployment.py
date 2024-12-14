@@ -4,20 +4,12 @@ Azure deployment settings for FakeNewsDetectorAPI
 
 import os
 from .settings import *  # This imports all settings from settings.py
+from .settings import BASE_DIR
 print("Loading deployment.py")
 
 # Configure the domain name using the environment variable
-ALLOWED_HOSTS = [
-    'fake-news-len.azurewebsites.net',
-    'localhost',
-    '127.0.0.1'
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://fake-news-len.azurewebsites.net',
-    'http://fake-news-len.azurewebsites.net',
-]
-
+ALLOWED_HOSTS = [os.environ['WEBSITE_HOSTNAME']]
+CSRF_TRUSTED_ORIGINS = ['https://'+os.environ['WEBSITE_HOSTNAME']]
 DEBUG = False
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') 
 
@@ -25,16 +17,23 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # WhiteNoise configuration
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise middleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Add CORS middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+
+CONNECTION = os.environ['AZURE_MYSQL_CONNECTIONSTRING']
+CONNECTION_STR = {pair.split('=')[0]:pair.split('=')[1] for pair in CONNECTION.split(' ')}
+
+
 
 # Configure MySQL database
 DATABASES = {
@@ -45,27 +44,15 @@ DATABASES = {
         'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
         'HOST': os.environ.get('AZURE_MYSQL_HOST', 'fake-news-detector-service-dbb.mysql.database.azure.com'),
         'PORT': '3306',
-        'OPTIONS': {
-            'ssl': {'ssl-mode': 'require'},  # Removed init_command
-        }
+        'OPTIONS': {},
     }
 }
 
-
-
-# SECURITY SETTINGS
-SECURE_SSL_REDIRECT = False
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 
 # CORS settings for your mobile app
 CORS_ALLOWED_ORIGINS = [
     "https://fake-news-len.azurewebsites.net",
 ]
-CORS_ALLOW_CREDENTIALS = True
 
 # Cache settings
 CACHES = {
@@ -89,3 +76,19 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+
+ADMINS = [("anas", "Anasap13@hotmail.com")]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+DEFAULT_FROM_EMAIL = 'default from email'
+
+
+
+
+STATIC_ROOT = BASE_DIR/'staticfiles'
