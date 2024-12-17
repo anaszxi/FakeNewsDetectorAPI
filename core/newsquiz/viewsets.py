@@ -1,4 +1,3 @@
-from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import action
@@ -11,6 +10,15 @@ class NewsQuizViewSet(viewsets.ViewSet):
     """A viewset to handle quiz."""
     http_method_names = ('get', 'post')
     serializer_class = NewsQuizAnsweredSerializer
+
+    def list(self, request):
+        """Default list action that returns random quiz question"""
+        news_for_quiz = NewsQuizData.objects.get_random_news()
+        if not news_for_quiz:
+            return Response({"error": "No quiz questions available"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = NewsQuizSerializer(news_for_quiz)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def random(self, request):
