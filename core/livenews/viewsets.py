@@ -18,67 +18,65 @@ logger = logging.getLogger(__name__)
 
 def get_new_news_from_api_and_update():
     """Gets news from the guardian news using it's API"""
-    news_data = requests.get("https://content.guardianapis.com/search?api-key=e705adff-ca49-414e-89e2-7edede919e2e")
-    news_data = news_data.json()
+    try:
+        # Disable SSL verification temporarily
+        response = requests.get(
+            "https://content.guardianapis.com/search",
+            params={"api-key": "e705adff-ca49-414e-89e2-7edede919e2e"},
+            verify=False  # Disable SSL verification
+        )
+        response.raise_for_status()  # Raise an exception for bad status codes
+        news_data = response.json()
 
-    news_titles = [article["webTitle"] for article in news_data["response"]["results"]]
-    news_publication_dates = [article["webPublicationDate"] for article in news_data["response"]["results"]]
-    news_categories = []
+        if "response" not in news_data or "results" not in news_data["response"]:
+            logger.error("Invalid response format from Guardian API")
+            return
 
-    for article in news_data["response"]["results"]:
-        try:
-            news_categories.append(article["pillarName"])
-        except KeyError:
-            news_categories.append("Undefined")
-
-    section_id = [article["sectionId"] for article in news_data["response"]["results"]]
-    section_name = [article["sectionName"] for article in news_data["response"]["results"]]
-    type = [article["type"] for article in news_data["response"]["results"]]
-    web_url = [article["webUrl"] for article in news_data["response"]["results"]]
-
-    nb_model, vect_model = load_models()
-
-    for i in range(len(news_titles)):
-        try:
-            title_ = news_titles[i]
-            publication_date_str = news_publication_dates[i]
-            
-            # Convert string to datetime with timezone
+        for article in news_data["response"]["results"]:
             try:
-                publication_date_ = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
-                publication_date_ = timezone.make_aware(publication_date_)
-            except ValueError:
-                logger.error(f"Invalid date format: {publication_date_str}")
-                continue
-                
-            category_ = news_categories[i]
-            section_id_ = section_id[i]
-            section_name_ = section_name[i]
-            type_ = type[i]
-            web_url_ = web_url[i]
+                title = article.get("webTitle")
+                publication_date_str = article.get("webPublicationDate")
+                category = article.get("pillarName", "Undefined")
+                section_id = article.get("sectionId")
+                section_name = article.get("sectionName")
+                article_type = article.get("type")
+                web_url = article.get("webUrl")
 
-            if not LiveNews.objects.filter(web_url=web_url_).exists():
-                vectorized_text = vect_model.transform([title_])
-                prediction = nb_model.predict(vectorized_text)
-                prediction_bool = True if prediction[0] == 1 else False
+                if not title or not publication_date_str:
+                    continue
 
-                img_url_ = scrap_img_from_web(web_url_)
-                
-                news_article = LiveNews(
-                    title=title_,
-                    publication_date=publication_date_,
-                    news_category=category_,
-                    prediction=prediction_bool,
-                    section_id=section_id_,
-                    section_name=section_name_,
-                    type=type_,
-                    web_url=web_url_,
-                    img_url=img_url_
+                # Convert string to datetime with timezone
+                try:
+                    publication_date = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
+                    publication_date = timezone.make_aware(publication_date)
+                except ValueError:
+                    logger.error(f"Invalid date format: {publication_date_str}")
+                    continue
+
+                # Load models only if we have valid data
+                nb_model, vect_model = load_models()
+
+                # Create or update the news entry
+                LiveNews.objects.update_or_create(
+                    title=title,
+                    defaults={
+                        'publication_date': publication_date,
+                        'news_category': category,
+                        'section_id': section_id,
+                        'section_name': section_name,
+                        'type': article_type,
+                        'web_url': web_url
+                    }
                 )
-                news_article.save()
-        except Exception as e:
-            logger.error(f"Error processing article {i}: {str(e)}")
-            continue
+
+            except Exception as e:
+                logger.error(f"Error processing article: {str(e)}")
+                continue
+
+    except requests.RequestException as e:
+        logger.error(f"Error fetching news from Guardian API: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error in get_new_news_from_api_and_update: {str(e)}")
 
 def scrap_img_from_web(url):
     print(url)
