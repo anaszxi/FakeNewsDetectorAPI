@@ -15,7 +15,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'fake-news-dan.azurewebsites.net',
+    'fake-news-russ.azurewebsites.net',
 ]
 
 
@@ -54,7 +54,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
-    "https://fake-news-dan.azurewebsites.net",  # Azure web app
+    "https://fake-news-russ.azurewebsites.net",  # Azure web app
 ]
 
 CORS_ALLOW_METHODS = [
