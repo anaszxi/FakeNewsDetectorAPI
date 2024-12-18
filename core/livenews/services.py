@@ -2,10 +2,12 @@ from django.conf import settings
 import requests
 import logging
 from datetime import datetime
+import time
 from django.utils import timezone
 from .models import LiveNews
 from core.model import load_models
 from bs4 import BeautifulSoup
+import certifi
 
 logger = logging.getLogger(__name__)
 
@@ -15,26 +17,54 @@ class GuardianNewsService:
     def __init__(self):
         self.api_key = settings.GUARDIAN_API_KEY
         self.model, self.vectorizer = load_models()
+        self.last_request_time = 0
+        self.min_request_interval = 1.0  # Minimum time between requests in seconds
+
+    def _wait_for_rate_limit(self):
+        """Implements rate limiting for API requests"""
+        current_time = time.time()
+        time_since_last_request = current_time - self.last_request_time
+        if time_since_last_request < self.min_request_interval:
+            time.sleep(self.min_request_interval - time_since_last_request)
+        self.last_request_time = time.time()
 
     def get_news_from_api(self):
         """Gets news from the Guardian API."""
         try:
-            news_data = requests.get(f"https://content.guardianapis.com/search?api-key={self.api_key}", verify=False)
+            self._wait_for_rate_limit()
+            news_data = requests.get(
+                f"https://content.guardianapis.com/search?api-key={self.api_key}",
+                verify=certifi.where()
+            )
+            if news_data.status_code == 429:
+                logger.warning("Rate limit reached, waiting before retry...")
+                time.sleep(5)  # Wait 5 seconds before retry
+                return self.get_news_from_api()  # Retry the request
+            news_data.raise_for_status()
             return news_data.json()
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching from API: {str(e)}")
             return None
 
     def get_guardian_articles(self):
         """Get articles from The Guardian API"""
         try:
+            self._wait_for_rate_limit()
             api_url = f"https://content.guardianapis.com/search"
             params = {
                 'api-key': self.api_key,
                 'show-fields': 'bodyText',
                 'page-size': 10
             }
-            response = requests.get(api_url, params=params, verify=False)
+            response = requests.get(
+                api_url, 
+                params=params,
+                verify=certifi.where()
+            )
+            if response.status_code == 429:
+                logger.warning("Rate limit reached, waiting before retry...")
+                time.sleep(5)  # Wait 5 seconds before retry
+                return self.get_guardian_articles()  # Retry the request
             response.raise_for_status()
             data = response.json()
             articles = []
@@ -114,6 +144,7 @@ class GuardianNewsService:
     def fetch_news(self, category=None):
         """Fetch news from Guardian API."""
         try:
+            self._wait_for_rate_limit()
             url = "https://content.guardianapis.com/search"
             params = {
                 'api-key': self.api_key,
@@ -123,11 +154,15 @@ class GuardianNewsService:
             }
             if category:
                 params['section'] = category.name
-            response = requests.get(url, params=params, verify=False)
-            if response.status_code == 200:
-                data = response.json()
-                if 'response' in data and 'results' in data['response']:
-                    return data['response']['results']
+            response = requests.get(url, params=params, verify=certifi.where())
+            if response.status_code == 429:
+                logger.warning("Rate limit reached, waiting before retry...")
+                time.sleep(5)  # Wait 5 seconds before retry
+                return self.fetch_news(category)  # Retry the request
+            response.raise_for_status()
+            data = response.json()
+            if 'response' in data and 'results' in data['response']:
+                return data['response']['results']
             return []
         except Exception as e:
             logger.error(f"Error fetching news: {str(e)}")
