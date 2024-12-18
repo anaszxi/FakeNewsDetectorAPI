@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-class NewsService:
+class GuardianNewsService:
     """Service for handling Guardian API news and predictions."""
 
     def __init__(self):
@@ -243,4 +243,4 @@ def scrap_img_from_web(url):
         return "None"
 
 # Initialize service for individual checks
-fake_news_service = NewsService()
+fake_news_service = GuardianNewsService()
