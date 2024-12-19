@@ -8,6 +8,12 @@ from .models import LiveNews
 from core.model import load_models
 from bs4 import BeautifulSoup
 import certifi
+import os
+from pathlib import Path
+import urllib3
+
+# Disable SSL warnings since we're using a custom certificate
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +24,13 @@ class GuardianNewsService:
         self.api_key = settings.GUARDIAN_API_KEY
         self.model, self.vectorizer = load_models()
         self.last_request_time = 0
-        self.min_request_interval = 1.0  # Minimum time between requests in seconds
+        self.min_request_interval = 1.0  # Minimum time between requests iself.cert_path
+        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent.parent, 'certs', 'chain.crt')
+        
+        # Verify certificate exists
+        if not os.path.exists(self.cert_path):
+            logger.warning(f"Certificate not found at {self.cert_path}, falling back to insecure requests")
+            self.cert_path = False  # Fall back to insecure requests if cert doesn't exist
 
     def _wait_for_rate_limit(self):
         """Implements rate limiting for API requests"""
@@ -34,7 +46,7 @@ class GuardianNewsService:
             self._wait_for_rate_limit()
             news_data = requests.get(
                 f"https://content.guardianapis.com/search?api-key={self.api_key}",
-                verify=certifi.where()
+                verify=self.cert_path
             )
             if news_data.status_code == 429:
                 logger.warning("Rate limit reached, waiting before retry...")
@@ -59,7 +71,7 @@ class GuardianNewsService:
             response = requests.get(
                 api_url, 
                 params=params,
-                verify=certifi.where()
+                verify=self.cert_path
             )
             if response.status_code == 429:
                 logger.warning("Rate limit reached, waiting before retry...")
@@ -154,7 +166,7 @@ class GuardianNewsService:
             }
             if category:
                 params['section'] = category.name
-            response = requests.get(url, params=params, verify=certifi.where())
+            response = requests.get(url, params=params, verify=self.cert_path)
             if response.status_code == 429:
                 logger.warning("Rate limit reached, waiting before retry...")
                 time.sleep(5)  # Wait 5 seconds before retry
