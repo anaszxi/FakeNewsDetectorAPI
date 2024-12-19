@@ -21,5 +21,5 @@ django-storages[azure]==1.14.2  # For Azure Storage
 azure-storage-blob==12.19.0  # For Azure Blob Storage
 python-decouple==3.8  # For environment variables
 mysql-connector-python==9.1.0
-certifi==2023.7.22
+certifi==2024.12.14
 #pip install -r requirements.txt

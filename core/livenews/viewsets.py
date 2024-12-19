@@ -16,19 +16,26 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+class RateLimitMixin:
+    _last_request_time = {}
+    _request_interval = 1.0  # 1 second between requests
+
+    def _wait_for_rate_limit(self):
+        current_time = time.time()
+        if self.__class__ in self._last_request_time:
+            time_since_last_request = current_time - self._last_request_time[self.__class__]
+            if time_since_last_request < self._request_interval:
+                time.sleep(self._request_interval - time_since_last_request)
+        self._last_request_time[self.__class__] = time.time()
+
 def get_new_news_from_api_and_update():
     """Gets news from the guardian news using it's API"""
     try:
-        # Disable SSL verification temporarily
-        response = requests.get(
-            "https://content.guardianapis.com/search",
-            params={"api-key": "e705adff-ca49-414e-89e2-7edede919e2e"},
-            verify=False  # Disable SSL verification
-        )
-        response.raise_for_status()  # Raise an exception for bad status codes
-        news_data = response.json()
-
-        if "response" not in news_data or "results" not in news_data["response"]:
+        # Use the GuardianNewsService to handle API calls with rate limiting and proper SSL verification
+        service = GuardianNewsService()
+        news_data = service.get_news_from_api()  # Remove verify parameter as it's handled in the service
+        
+        if not news_data or "response" not in news_data or "results" not in news_data["response"]:
             logger.error("Invalid response format from Guardian API")
             return
 
@@ -53,19 +60,16 @@ def get_new_news_from_api_and_update():
                     logger.error(f"Invalid date format: {publication_date_str}")
                     continue
 
-                # Load models only if we have valid data
-                nb_model, vect_model = load_models()
-
                 # Create or update the news entry
                 LiveNews.objects.update_or_create(
-                    title=title,
+                    web_url=web_url,  # Use web_url as the unique identifier
                     defaults={
+                        'title': title,
                         'publication_date': publication_date,
                         'news_category': category,
                         'section_id': section_id,
                         'section_name': section_name,
-                        'type': article_type,
-                        'web_url': web_url
+                        'type': article_type
                     }
                 )
 
@@ -73,36 +77,40 @@ def get_new_news_from_api_and_update():
                 logger.error(f"Error processing article: {str(e)}")
                 continue
 
-    except requests.RequestException as e:
-        logger.error(f"Error fetching news from Guardian API: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error in get_new_news_from_api_and_update: {str(e)}")
 
 def scrap_img_from_web(url):
-    print(url)
-    r = requests.get(url)
-    if r.status_code != 200:
-        return "None"
-    web_content = r.content
-    soup = BeautifulSoup(web_content, 'html.parser')
+    """Scrape image from article webpage."""
     try:
-        imgs = soup.find_all('article')[0].find_all('img', class_='dcr-evn1e9')
-        img_urls = []
-        for img in imgs:
-            src = img.get("src")
-            img_urls.append(src)
-        
-        if not img_urls:
+        r = requests.get(url, verify=True)
+        if r.status_code != 200:
             return "None"
-        return img_urls[0]
-    except:
+        web_content = r.content
+        soup = BeautifulSoup(web_content, 'html.parser')
+        try:
+            imgs = soup.find_all('article')[0].find_all('img', class_='dcr-evn1e9')
+            img_urls = []
+            for img in imgs:
+                src = img.get("src")
+                img_urls.append(src)
+        
+            if not img_urls:
+                return "None"
+            return img_urls[0]
+        except:
+            return "None"
+
+    except Exception as e:
+        logger.error(f"Error scraping image: {str(e)}")
         return "None"
 
 def auto_refresh_news():
+    """Auto refresh news from Guardian API with appropriate rate limiting"""
     get_new_news_from_api_and_update()
-    interval = 10
+    interval = 300  # 5 minutes interval
     while True:
-        print("Thread running!")
+        logger.info("Refreshing news from Guardian API...")
         get_new_news_from_api_and_update()
         time.sleep(interval)
 
@@ -114,11 +122,12 @@ auto_refresh_thread.start()
 # Initialize service for individual checks
 fake_news_service = GuardianNewsService()
 
-class LiveNewsPrediction(viewsets.ViewSet):
+class LiveNewsPrediction(viewsets.ViewSet, RateLimitMixin):
     http_method_names = ('get', 'post', )
 
     def list(self, request):
         """Handles GET request by displaying all newly retrieved in database."""
+        self._wait_for_rate_limit()
         # Get offset from query params, default to 0
         offset = int(request.query_params.get('offset', 0))
         limit = int(request.query_params.get('limit', 10))
@@ -138,6 +147,7 @@ class LiveNewsPrediction(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         """Get specific news article by ID."""
+        self._wait_for_rate_limit()
         try:
             news_prediction = LiveNews.objects.get(pk=pk)
         except LiveNews.DoesNotExist:
@@ -146,9 +156,10 @@ class LiveNewsPrediction(viewsets.ViewSet):
         serializer = LiveNewsDetailedSerializer(news_prediction)
         return Response(serializer.data)
 
-class LiveNewsByCategory(viewsets.ViewSet):
+class LiveNewsByCategory(viewsets.ViewSet, RateLimitMixin):
     def list(self, request):
         """Get menu of all available categories."""
+        self._wait_for_rate_limit()
         try:
             # Get unique categories from existing news articles
             categories = list(set(LiveNews.objects.values_list('news_category', flat=True)))
@@ -168,6 +179,7 @@ class LiveNewsByCategory(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         """Get news articles for a specific category."""
+        self._wait_for_rate_limit()
         try:
             category_name = pk.replace('-', ' ')
             
@@ -200,11 +212,12 @@ class LiveNewsByCategory(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class CheckByTitle(viewsets.ViewSet):
+class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
     """ViewSet for checking if a news title is fake or real."""
     
     def list(self, request):
         """Handle GET request to show API usage."""
+        self._wait_for_rate_limit()
         return Response({
             'status': 'success',
             'message': 'Use POST request with a title parameter to check news',
@@ -215,6 +228,7 @@ class CheckByTitle(viewsets.ViewSet):
     
     def create(self, request):
         """Check if a news title is fake or real."""
+        self._wait_for_rate_limit()
         title = request.data.get('title')
         
         if not title:
@@ -244,13 +258,14 @@ class CheckByTitle(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class NewsViewSet(viewsets.ModelViewSet):
+class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
     queryset = LiveNews.objects.all()
     serializer_class = NewsSerializer
 
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Search news articles by query."""
+        self._wait_for_rate_limit()
         try:
             # Get search query and pagination parameters
             query = request.query_params.get('q', '')
@@ -293,6 +308,7 @@ class NewsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def analyze(self, request):
         """Analyze news article for fake news detection."""
+        self._wait_for_rate_limit()
         try:
             # Validate input
             title = request.data.get('title')

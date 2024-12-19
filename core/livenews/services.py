@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import urllib3
 
-# Disable SSL warnings since we're using a custom certificate
+# Disable SSL warnings since we're using system CA certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
@@ -24,36 +24,50 @@ class GuardianNewsService:
         self.api_key = settings.GUARDIAN_API_KEY
         self.model, self.vectorizer = load_models()
         self.last_request_time = 0
-        self.min_request_interval = 1.0  # Minimum time between requests iself.cert_path
-        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent.parent, 'certs', 'chain.crt')
-        
-        # Verify certificate exists
-        if not os.path.exists(self.cert_path):
-            logger.warning(f"Certificate not found at {self.cert_path}, falling back to insecure requests")
-            self.cert_path = False  # Fall back to insecure requests if cert doesn't exist
+        self.min_request_interval = 2.0  # Minimum time between requests
+        self.max_retries = 3
+        self.retry_delay = 5  # 5 seconds delay between retries
 
     def _wait_for_rate_limit(self):
         """Implements rate limiting for API requests"""
         current_time = time.time()
         time_since_last_request = current_time - self.last_request_time
         if time_since_last_request < self.min_request_interval:
-            time.sleep(self.min_request_interval - time_since_last_request)
+            sleep_time = self.min_request_interval - time_since_last_request
+            logger.debug(f"Rate limiting: waiting {sleep_time:.2f} seconds")
+            time.sleep(sleep_time)
         self.last_request_time = time.time()
+
+    def _make_request_with_retry(self, url, params=None):
+        """Makes a request with retry logic for rate limits"""
+        for attempt in range(self.max_retries):
+            self._wait_for_rate_limit()
+            try:
+                response = requests.get(url, params=params, verify=True)
+                if response.status_code == 429:
+                    wait_time = self.retry_delay * (attempt + 1)
+                    logger.warning(f"Rate limit reached (attempt {attempt + 1}/{self.max_retries}), waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    continue
+                response.raise_for_status()
+                return response
+            except requests.exceptions.RequestException as e:
+                if attempt == self.max_retries - 1:
+                    raise
+                logger.warning(f"Request failed (attempt {attempt + 1}/{self.max_retries}): {str(e)}")
+                time.sleep(self.retry_delay)
+        return None
 
     def get_news_from_api(self):
         """Gets news from the Guardian API."""
         try:
-            self._wait_for_rate_limit()
-            news_data = requests.get(
-                f"https://content.guardianapis.com/search?api-key={self.api_key}",
-                verify=self.cert_path
+            response = self._make_request_with_retry(
+                "https://content.guardianapis.com/search",
+                params={"api-key": self.api_key}
             )
-            if news_data.status_code == 429:
-                logger.warning("Rate limit reached, waiting before retry...")
-                time.sleep(5)  # Wait 5 seconds before retry
-                return self.get_news_from_api()  # Retry the request
-            news_data.raise_for_status()
-            return news_data.json()
+            if response:
+                return response.json()
+            return None
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching from API: {str(e)}")
             return None
@@ -61,23 +75,18 @@ class GuardianNewsService:
     def get_guardian_articles(self):
         """Get articles from The Guardian API"""
         try:
-            self._wait_for_rate_limit()
-            api_url = f"https://content.guardianapis.com/search"
             params = {
                 'api-key': self.api_key,
                 'show-fields': 'bodyText',
                 'page-size': 10
             }
-            response = requests.get(
-                api_url, 
-                params=params,
-                verify=self.cert_path
+            response = self._make_request_with_retry(
+                "https://content.guardianapis.com/search",
+                params=params
             )
-            if response.status_code == 429:
-                logger.warning("Rate limit reached, waiting before retry...")
-                time.sleep(5)  # Wait 5 seconds before retry
-                return self.get_guardian_articles()  # Retry the request
-            response.raise_for_status()
+            if not response:
+                raise Exception("Failed to fetch articles after retries")
+            
             data = response.json()
             articles = []
             for result in data['response']['results']:
@@ -94,14 +103,14 @@ class GuardianNewsService:
     def get_article_text(self, url):
         """Get article text from URL"""
         try:
-            response = requests.get(url)
+            response = requests.get(url, verify=True)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             paragraphs = soup.find_all('p')
             return ' '.join([p.get_text() for p in paragraphs])
         except Exception as e:
             logger.error(f"Error fetching article text: {str(e)}")
-            raise
+            return None
 
     def analyze_article(self, text, model=None, vectorizer=None):
         """Analyze article text for fake news"""
@@ -166,15 +175,12 @@ class GuardianNewsService:
             }
             if category:
                 params['section'] = category.name
-            response = requests.get(url, params=params, verify=self.cert_path)
-            if response.status_code == 429:
-                logger.warning("Rate limit reached, waiting before retry...")
-                time.sleep(5)  # Wait 5 seconds before retry
-                return self.fetch_news(category)  # Retry the request
-            response.raise_for_status()
-            data = response.json()
-            if 'response' in data and 'results' in data['response']:
-                return data['response']['results']
+            response = self._make_request_with_retry(url, params=params)
+            if response:
+                data = response.json()
+                if 'response' in data and 'results' in data['response']:
+                    return data['response']['results']
+                return []
             return []
         except Exception as e:
             logger.error(f"Error fetching news: {str(e)}")
@@ -270,7 +276,7 @@ class GuardianNewsService:
 def scrap_img_from_web(url):
     """Scrape image from article webpage."""
     try:
-        r = requests.get(url)
+        r = requests.get(url, verify=True)
         if r.status_code != 200:
             return "None"
         web_content = r.content

@@ -20,8 +20,8 @@ class Command(BaseCommand):
         base_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
         
         # Use provided CSV path or default to game_data/game_data.csv
-        if options.get('csv_file'):
-            csv_path = options['csv_file']
+        if options.get('game_data.csv'):
+            csv_path = options['game_date.csv']
         else:
             csv_path = os.path.join(base_dir, 'game_data', 'game_data.csv')
         
