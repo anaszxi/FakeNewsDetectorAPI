@@ -27,6 +27,11 @@ class GuardianNewsService:
         self.min_request_interval = 2.0  # Minimum time between requests
         self.max_retries = 3
         self.retry_delay = 5  # 5 seconds delay between retries
+        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent, 'certs', 'chain.cer') # Path to your .cer file
+        
+        if not os.path.exists(self.cert_path):
+            logger.warning(f"Certificate not found at {self.cert_path}, falling back to insecure requests")
+            self.cert_path = False  # Fall back to insecure requests if cert doesn't exist
 
     def _wait_for_rate_limit(self):
         """Implements rate limiting for API requests"""
@@ -43,7 +48,7 @@ class GuardianNewsService:
         for attempt in range(self.max_retries):
             self._wait_for_rate_limit()
             try:
-                response = requests.get(url, params=params, verify=True)
+                response = requests.get(url, params=params, verify=self.cert_path)
                 if response.status_code == 429:
                     wait_time = self.retry_delay * (attempt + 1)
                     logger.warning(f"Rate limit reached (attempt {attempt + 1}/{self.max_retries}), waiting {wait_time} seconds...")
@@ -103,7 +108,7 @@ class GuardianNewsService:
     def get_article_text(self, url):
         """Get article text from URL"""
         try:
-            response = requests.get(url, verify=True)
+            response = requests.get(url, verify=self.cert_path)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             paragraphs = soup.find_all('p')
@@ -276,7 +281,7 @@ class GuardianNewsService:
 def scrap_img_from_web(url):
     """Scrape image from article webpage."""
     try:
-        r = requests.get(url, verify=True)
+        r = requests.get(url, verify=fake_news_service.cert_path)
         if r.status_code != 200:
             return "None"
         web_content = r.content
