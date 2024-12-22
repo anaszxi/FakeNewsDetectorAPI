@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
+import certifi  # Import certifi
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class RateLimitMixin:
             time_since_last_request = current_time - self._last_request_time[self.__class__]
             if time_since_last_request < self._request_interval:
                 time.sleep(self._request_interval - time_since_last_request)
-        self._last_request_time[self.__class__] = time.time()
+        self._last_request_time[self.__class__] = current_time
 
 def get_new_news_from_api_and_update():
     """Gets news from the guardian news using its API"""
@@ -114,7 +115,7 @@ def scrap_img_from_web(url):
     """Scrape image from article webpage with improved HTTPS handling."""
     mixin = HTTPSRequestMixin()
     try:
-        response = mixin._make_https_request(url, verify=settings.CERT_PATH)
+        response = mixin._make_https_request(url, verify=certifi.where())  # Use certifi for certificate verification
         if not response:
             logger.warning(f"Failed to fetch image from {url}")
             return "None"
