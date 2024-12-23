@@ -15,6 +15,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '169.254.129.3',
     'fake-news-russ.azurewebsites.net',
 ]
 
