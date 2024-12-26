@@ -58,6 +58,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://fake-news-russ.azurewebsites.net",  # Azure web app
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
