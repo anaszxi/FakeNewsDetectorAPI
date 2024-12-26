@@ -50,6 +50,7 @@ DATABASES = {
     }
 }
 
+SECURE_SSL_REDIRECT = True
 
 #CORS settings for your mobile app
 #CORS_ALLOWED_ORIGINS = [
