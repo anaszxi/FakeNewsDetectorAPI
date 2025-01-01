@@ -36,7 +36,7 @@ MIDDLEWARE = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mysql',  # Your database name
+        'NAME': 'mainsql',  # Your database name
         'USER': 'dbbadmin',  # Your MySQL username
         'PASSWORD': 'd6cTQk2Na6ma7JE',  # Your MySQL password
         'HOST': 'fake-news-detector-service-dbb.mysql.database.azure.com',  # Your MySQL server hostname
