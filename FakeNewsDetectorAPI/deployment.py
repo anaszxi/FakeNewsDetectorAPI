@@ -44,7 +44,7 @@ DATABASES = {
         'OPTIONS': {
             'ssl': {
                 'ca': os.path.join(BASE_DIR, 'certs', 'DigiCertGlobalRootG2.crt.pem'),
-                'ssl_disabled': False,  # Enforce SSL connection
+                'ssl_disabled': True,  # Enforce SSL connection
             }
         },
     }
