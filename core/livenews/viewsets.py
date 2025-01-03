@@ -5,7 +5,6 @@ from .models import LiveNews, NewsCategory
 from .serializers import LiveNewsSerializer, LiveNewsDetailedSerializer, NewsSerializer, CategorySerializer
 from .services import GuardianNewsService, fake_news_service
 from core.model import load_models
-from django.conf import settings
 import logging
 import threading
 import time
@@ -14,38 +13,8 @@ from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
-import certifi  # Import certifi
 
 logger = logging.getLogger(__name__)
-
-class HTTPSRequestMixin:
-    """Mixin for handling HTTPS requests with retry logic"""
-    max_retries = 3
-    retry_delay = 5
-    request_interval = 1.0
-
-    def _make_https_request(self, url, verify=True):
-        """Makes HTTPS request with retry logic"""
-        for attempt in range(self.max_retries):
-            try:
-                response = requests.get(url, verify=verify)
-                if response.status_code == 429:  # Rate limit reached
-                    wait_time = self.retry_delay * (attempt + 1)
-                    logger.warning(f"Rate limit reached (attempt {attempt + 1}/{self.max_retries}), waiting {wait_time} seconds...")
-                    time.sleep(wait_time)
-                    continue
-                response.raise_for_status()
-                return response
-            except requests.exceptions.SSLError as e:
-                logger.error(f"SSL Error: {str(e)}")
-                raise
-            except requests.exceptions.RequestException as e:
-                if attempt == self.max_retries - 1:
-                    logger.error(f"Request failed after {self.max_retries} attempts: {str(e)}")
-                    raise
-                logger.warning(f"Request failed (attempt {attempt + 1}/{self.max_retries}): {str(e)}")
-                time.sleep(self.retry_delay)
-        return None
 
 class RateLimitMixin:
     _last_request_time = {}
@@ -57,7 +26,7 @@ class RateLimitMixin:
             time_since_last_request = current_time - self._last_request_time[self.__class__]
             if time_since_last_request < self._request_interval:
                 time.sleep(self._request_interval - time_since_last_request)
-        self._last_request_time[self.__class__] = current_time
+        self._last_request_time[self.__class__] = time.time()
 
 def get_new_news_from_api_and_update():
     """Gets news from the guardian news using its API"""
@@ -112,38 +81,28 @@ def get_new_news_from_api_and_update():
         logger.error(f"Unexpected error in get_new_news_from_api_and_update: {str(e)}")
 
 def scrap_img_from_web(url):
-    """Scrape image from article webpage with improved HTTPS handling."""
-    mixin = HTTPSRequestMixin()
+    """Scrape image from article webpage."""
     try:
-        response = mixin._make_https_request(url, verify=certifi.where())  # Use certifi for certificate verification
-        if not response:
-            logger.warning(f"Failed to fetch image from {url}")
+        r = requests.get(url, verify='self.cert_path')
+        if r.status_code != 200:
             return "None"
-            
-        web_content = response.content
+        web_content = r.content
         soup = BeautifulSoup(web_content, 'html.parser')
         try:
             imgs = soup.find_all('article')[0].find_all('img', class_='dcr-evn1e9')
             img_urls = []
             for img in imgs:
                 src = img.get("src")
-                if src and src.startswith('https://'):  # Ensure HTTPS URLs only
-                    img_urls.append(src)
-            
+                img_urls.append(src)
+        
             if not img_urls:
                 return "None"
             return img_urls[0]
-        except (IndexError, AttributeError) as e:
-            logger.error(f"Error parsing HTML content: {str(e)}")
+        except:
             return "None"
-    except requests.exceptions.SSLError as e:
-        logger.error(f"SSL Error when scraping image from {url}: {str(e)}")
-        return "None"
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request failed when scraping image from {url}: {str(e)}")
-        return "None"
+
     except Exception as e:
-        logger.error(f"Unexpected error when scraping image from {url}: {str(e)}")
+        logger.error(f"Error scraping image: {str(e)}")
         return "None"
 
 def auto_refresh_news():
@@ -365,16 +324,4 @@ class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
             result = fake_news_service.predict_news(title, text)
             
             return Response({
-                'status': 'success',
-                'title': title,
-                'prediction': result['prediction'],
-                'confidence': result['confidence'],
-                'analysis': result['analysis']
-            })
-            
-        except Exception as e:
-            logger.error(f"Error predicting news: {str(e)}")
-            return Response(
-                {"error": "Error processing prediction"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                'status': 'success
