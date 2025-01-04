@@ -249,7 +249,7 @@ class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
                 'prediction': result['prediction'],
                 'confidence': result['confidence'],
                 'analysis': result['analysis']
-            })
+            }, status=status.HTTP_200_OK)
             
         except Exception as e:
             logger.error(f"Error predicting news: {str(e)}")
