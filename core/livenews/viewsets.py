@@ -325,3 +325,4 @@ class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
             
             return Response({
                 'status': 'success'
+})
