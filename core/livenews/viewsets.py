@@ -324,4 +324,4 @@ class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
             result = fake_news_service.predict_news(title, text)
             
             return Response({
-                'status': 'success
+                'status': 'success'
