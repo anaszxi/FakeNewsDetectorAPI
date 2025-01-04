@@ -83,7 +83,7 @@ def get_new_news_from_api_and_update():
 def scrap_img_from_web(url):
     """Scrape image from article webpage."""
     try:
-        r = requests.get(url, verify='self.cert_path')
+        r = requests.get(url, verify=self.cert_path)
         if r.status_code != 200:
             return "None"
         web_content = r.content
