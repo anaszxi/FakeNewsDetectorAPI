@@ -33,7 +33,7 @@ def get_new_news_from_api_and_update():
     try:
         # Use the GuardianNewsService to handle API calls with rate limiting and proper SSL verification
         service = GuardianNewsService()
-        news_data = service.get_news_from_api()  # Remove verify parameter as it's handled in the service
+        news_data = service.get_guardian_articles()  # Remove verify parameter as it's handled in the service
         
         if not news_data or "response" not in news_data or "results" not in news_data["response"]:
             logger.error("Invalid response format from Guardian API")
