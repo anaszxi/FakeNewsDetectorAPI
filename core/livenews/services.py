@@ -27,11 +27,11 @@ class GuardianNewsService:
         self.min_request_interval = 2.0  # Minimum time between requests
         self.max_retries = 3
         self.retry_delay = 5  # 5 seconds delay between retries
-        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent.parent, 'certs', 'DigiCertGlobalRootG2.crt.pem') # Path to your .cer file
+        self.cert_path = os.environ.get("SSL_CERT_FILE", certifi.where())
         
         if not os.path.exists(self.cert_path):
-            logger.warning(f"Certificate not found at {self.cert_path}, falling back to insecure requests")
-            self.cert_path = False  # Fall back to insecure requests if cert doesn't exist
+            logger.warning(f"Certificate not found at {self.cert_path}, falling back to  system defaults")
+            self.cert_path = None  # Fall back to insecure requests if cert doesn't exist
 
     def _wait_for_rate_limit(self):
         """Implements rate limiting for API requests"""
