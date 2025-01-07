@@ -135,7 +135,7 @@ class GuardianNewsService:
             raise
 
     def analyze_live_news(self):
-        """Analyze live news articles for fake news"""
+        """Analyze livenews articles for fake news"""
         try:
             articles = self.get_guardian_articles()
             results = []
