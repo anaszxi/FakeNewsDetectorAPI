@@ -14,7 +14,6 @@ CSRF_TRUSTED_ORIGINS = ['https://'+os.environ['WEBSITE_HOSTNAME']]
 DEBUG = False
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') 
 
-CERT_PATH = os.environ.get("SSL_CERT_FILE")
 
 # WhiteNoise configuration
 MIDDLEWARE = [
@@ -44,7 +43,7 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {
             'ssl': {
-                'ca': CERT_PATH,
+                'ca': os.path.join(BASE_DIR, 'certs', 'cacert.pem'),
                 'ssl_disabled': False,  # Enforce SSL connection
             }
         },
