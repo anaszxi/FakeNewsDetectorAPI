@@ -43,7 +43,7 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {
             'ssl': {
-                'ca': os.path.join(BASE_DIR, 'certs', 'cacert.pem'),
+                'ca': os.path.join(BASE_DIR, 'certs', 'DigiCertGlobalRootCA.crt.pem'),
                 'ssl_disabled': False,  # Enforce SSL connection
             }
         },
