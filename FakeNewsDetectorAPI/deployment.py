@@ -31,20 +31,17 @@ MIDDLEWARE = [
 
 
 
-# Configure MySQL database
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mainsql',  # Your database name
-        'USER': 'dbbadmin',  # Your MySQL username
-        'PASSWORD': 'd6cTQk2Na6ma7JE',  # Your MySQL password
-        'HOST': 'fake-news-detector-service-dbb.mysql.database.azure.com',  # Your MySQL server hostname
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',  # Your PostgreSQL database name
+        'USER': 'dbbadmin',
+        'PASSWORD': 'd6cTQk2Na6ma7JE',
+        'HOST': 'fake-news.postgres.database.azure.com',
+        'PORT': '5432',
         'OPTIONS': {
-            'ssl': {
-                'ca': os.path.join(BASE_DIR, 'certs', 'DigiCertGlobalRootG2.crt.pem'),
-            }
+            'sslmode': 'verify-full',
+            'sslrootcert': os.path.join(BASE_DIR, 'certs', 'DigiCertGlobalRootG2.crt.pem'),
         },
     }
 }
