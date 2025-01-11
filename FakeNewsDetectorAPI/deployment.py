@@ -40,8 +40,7 @@ DATABASES = {
         'HOST': 'fake-news.postgres.database.azure.com',
         'PORT': '5432',
         'OPTIONS': {
-            'sslmode': 'verify-full',
-            'sslrootcert': os.path.join(BASE_DIR, 'certs', 'DigiCertGlobalRootG2.crt.pem'),
+            'sslmode': 'require',
         },
     }
 }
