@@ -27,7 +27,7 @@ class GuardianNewsService:
         self.min_request_interval = 2.0  # Minimum time between requests
         self.max_retries = 3
         self.retry_delay = 5  # 5 seconds delay between retries
-        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent.parent, 'certs', 'cacert.pem')
+        self.cert_path = os.path.join(Path(__file__).resolve().parent.parent.parent, 'certs', 'DigiCertGlobalRootCA.crt.pem')
         
         if not os.path.exists(self.cert_path):
             logger.warning(f"Certificate not found at {self.cert_path}, falling back to  system defaults")
