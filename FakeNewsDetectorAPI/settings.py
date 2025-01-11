@@ -15,8 +15,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '169.254.130.2', 
-    'fake-news-russ.azurewebsites.net',
+    '169.254.130.3', 
+    'fake-news-beta.azurewebsites.net',
 ]
 
 
@@ -57,7 +57,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",  # Local Django server
     "169.254.130.2:8000",
     "https://content.guardianapis.com",
-    "https://fake-news-russ.azurewebsites.net",  # Azure web app
+    "https://fake-news-beta.azurewebsites.net",  # Azure web app
 ]
 
 
