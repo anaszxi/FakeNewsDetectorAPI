@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
-
+from dateutil import parser
 logger = logging.getLogger(__name__)
 
 class RateLimitMixin:
@@ -28,70 +28,59 @@ class RateLimitMixin:
                 time.sleep(self._request_interval - time_since_last_request)
         self._last_request_time[self.__class__] = time.time()
 
-def get_new_news_from_api_and_update():
-    """Fetches news from the Guardian API, analyzes them, and saves them to the database."""
-    try:
-        # Use the GuardianNewsService to handle API calls
-        service = GuardianNewsService()
-        articles = service.get_guardian_articles()
+from dateutil import parser
+from django.utils import timezone
+import logging
 
-        if not articles:
-            logger.error("No valid articles received from Guardian API.")
+logger = logging.getLogger(__name__)
+
+def get_new_news_from_api_and_update():
+    """Gets news from the Guardian News using its API"""
+    try:
+        # Use the GuardianNewsService to handle API calls with rate limiting and proper SSL verification
+        service = GuardianNewsService()
+        news_data = service.get_guardian_articles()
+        
+        if not news_data or "response" not in news_data or "results" not in news_data["response"]:
+            logger.error("Invalid response format from Guardian API")
             return
 
-        for article in articles:
+        for article in news_data["response"]["results"]:
             try:
-                title = article.get("title")
-                text = article.get("text")
-                web_url = article.get("url")
-                publication_date_str = article.get("webPublicationDate", "")
+                title = article.get("webTitle")
+                publication_date_str = article.get("webPublicationDate")
                 category = article.get("pillarName", "Undefined")
-                section_id = article.get("sectionId", "")
-                section_name = article.get("sectionName", "")
-                article_type = article.get("type", "article")
+                section_id = article.get("sectionId")
+                section_name = article.get("sectionName")
+                article_type = article.get("type")
+                web_url = article.get("webUrl")
 
-                if not title or not text or not web_url:
-                    logger.warning("Skipping article with missing essential fields.")
+                if not title or not publication_date_str:
                     continue
 
-                # Convert string to datetime with timezone
+                # Log the received date for debugging
+                logger.info(f"Received publication date: {publication_date_str}")
+
+                # Flexible date parsing
                 try:
-                    publication_date = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
+                    publication_date = parser.parse(publication_date_str)
                     publication_date = timezone.make_aware(publication_date)
-                except ValueError:
-                    logger.error(f"Invalid date format: {publication_date_str}")
+                except Exception as e:
+                    logger.error(f"Invalid date format: {publication_date_str} | Error: {str(e)}")
                     continue
 
-                
-                if LiveNews.objects.filter(web_url=web_url).exists():
-                    logger.info(f"Skipping duplicate article: {title}")
-                    continue
-
-                
-                vectorized_text = service.vectorizer.transform([text])
-                prediction = service.model.predict(vectorized_text)
-                prediction_bool = bool(prediction[0])
-                probabilities = service.model.predict_proba(vectorized_text)[0]
-                confidence = float(max(probabilities))
-
-                # Scrape image from the article webpage
-                img_url = scrap_img_from_web(web_url)
-
-                # Save news to database
-                LiveNews.objects.create(
-                    title=title,
-                    publication_date=publication_date,
-                    news_category=category,
-                    prediction=prediction_bool,
-                    confidence=confidence,
-                    section_id=section_id,
-                    section_name=section_name,
-                    type=article_type,
-                    web_url=web_url,
-                    img_url=img_url
+                # Create or update the news entry
+                LiveNews.objects.update_or_create(
+                    web_url=web_url,  # Use web_url as the unique identifier
+                    defaults={
+                        'title': title,
+                        'publication_date': publication_date,
+                        'news_category': category,
+                        'section_id': section_id,
+                        'section_name': section_name,
+                        'type': article_type
+                    }
                 )
-
-                logger.info(f"Saved new article: {title}")
 
             except Exception as e:
                 logger.error(f"Error processing article: {str(e)}")
