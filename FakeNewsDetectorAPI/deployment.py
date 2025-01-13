@@ -34,7 +34,7 @@ MIDDLEWARE = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',  # Your PostgreSQL database name
+        'NAME': 'fake_news_dbb',  # Your PostgreSQL database name
         'USER': 'dbbadmin',
         'PASSWORD': 'd6cTQk2Na6ma7JE',
         'HOST': 'fake-news.postgres.database.azure.com',
