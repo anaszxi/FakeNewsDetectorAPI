@@ -37,15 +37,17 @@ logger = logging.getLogger(__name__)
 def get_new_news_from_api_and_update():
     """Gets news from the Guardian News using its API"""
     try:
-        # Use the GuardianNewsService to handle API calls with rate limiting and proper SSL verification
         service = GuardianNewsService()
         news_data = service.get_guardian_articles()
-        
+
         if not news_data or "response" not in news_data or "results" not in news_data["response"]:
-            logger.error("Invalid response format from Guardian API")
+            logger.error("❌ No news data received from API")
             return
 
-        for article in news_data["response"]["results"]:
+        articles = news_data["response"]["results"]
+        logger.info(f"📢 Processing {len(articles)} articles from API")
+
+        for article in articles:
             try:
                 title = article.get("webTitle")
                 publication_date_str = article.get("webPublicationDate")
@@ -56,22 +58,27 @@ def get_new_news_from_api_and_update():
                 web_url = article.get("webUrl")
 
                 if not title or not publication_date_str:
+                    logger.warning("⚠️ Skipping article due to missing title or date")
                     continue
 
-                # Log the received date for debugging
-                logger.info(f"Received publication date: {publication_date_str}")
-
-                # Flexible date parsing
+                # Convert string to datetime
                 try:
-                    publication_date = parser.parse(publication_date_str)
+                    publication_date = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
                     publication_date = timezone.make_aware(publication_date)
-                except Exception as e:
-                    logger.error(f"Invalid date format: {publication_date_str} | Error: {str(e)}")
+                except ValueError:
+                    logger.error(f"❌ Invalid date format: {publication_date_str}")
                     continue
+
+                # PostgreSQL Debugging: Check if the object exists before updating
+                existing_news = LiveNews.objects.filter(web_url=web_url).exists()
+                if existing_news:
+                    logger.info(f"🔄 Updating existing news: {title}")
+                else:
+                    logger.info(f"🆕 Creating new news: {title}")
 
                 # Create or update the news entry
-                LiveNews.objects.update_or_create(
-                    web_url=web_url,  # Use web_url as the unique identifier
+                result, created = LiveNews.objects.update_or_create(
+                    web_url=web_url,
                     defaults={
                         'title': title,
                         'publication_date': publication_date,
@@ -81,13 +88,15 @@ def get_new_news_from_api_and_update():
                         'type': article_type
                     }
                 )
+                logger.info(f"✅ News {'created' if created else 'updated'}: {title}")
 
             except Exception as e:
-                logger.error(f"Error processing article: {str(e)}")
+                logger.error(f"❌ Error processing article: {str(e)}")
                 continue
 
     except Exception as e:
-        logger.error(f"Unexpected error in get_new_news_from_api_and_update: {str(e)}")
+        logger.error(f"❌ Unexpected error in get_new_news_from_api_and_update: {str(e)}")
+
 
 def scrap_img_from_web(url):
     """Scrape image from article webpage."""
