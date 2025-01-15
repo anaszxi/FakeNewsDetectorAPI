@@ -9,10 +9,15 @@ logger = logging.getLogger(__name__)
 
 def load_models():
     """
-    Load the trained model and vectorizer
+    Load the trained model and vectorizer, ensuring compatibility with the current scikit-learn version.
+    If the model is not found locally, it will be downloaded from blob storage.
     """
     try:
         logger.info("Loading model...")
+
+        # Get current scikit-learn version
+        current_version = sklearn_version
+        logger.info(f"Current scikit-learn version: {current_version}")
         
         # Check if model exists locally, if not download it
         if not os.path.exists(settings.LOCAL_MODEL_PATH):
@@ -21,32 +26,42 @@ def load_models():
             if not download_model_from_blob():
                 raise Exception("Failed to download model from blob storage")
         
-        # Load the model
+        # Load the model from the local path
         with open(settings.LOCAL_MODEL_PATH, 'rb') as f:
-            models = pickle.load(f)
-            
-        nb_model = models['model']
-        vect_model = models['vectorizer']
+            model_info = pickle.load(f)
+
+        # Extract model, vectorizer, and saved scikit-learn version
+        saved_version = model_info['sklearn_version']
+        vectorizer = model_info['vectorizer']
+        model = model_info['model']
         
-        # Test the model
-        test_text = "This is a test article"
-        features = vect_model.transform([test_text])
-        prediction = nb_model.predict(features)
-        probabilities = nb_model.predict_proba(features)
+        logger.info(f"Loaded model trained with scikit-learn version: {saved_version}")
+        
+        if saved_version != current_version:
+            logger.warning(f"Version mismatch: Model trained with {saved_version}, "
+                            f"current version is {current_version}")
+        
+        # Test the models with a sample prediction
+        test_text = "This is a test news article"
+        test_features = vectorizer.transform([test_text])
+        test_pred = model.predict(test_features)
+        test_prob = model.predict_proba(test_features)
         
         logger.info("Model test results:")
-        logger.info(f"- Test prediction: {prediction[0]}")
-        logger.info(f"- Test probability: {probabilities[0][1]:.2%}")
-        logger.info(f"- Vectorizer vocabulary size: {len(vect_model.vocabulary_)}")
+        logger.info(f"- Test prediction: {test_pred[0]}")
+        logger.info(f"- Test probability: {np.max(test_prob[0]):.2%}")
+        logger.info(f"- Vectorizer vocabulary size: {len(vectorizer.vocabulary_)}")
+        logger.info("Successfully loaded and tested model")
         
-        return nb_model, vect_model
-        
+        return model, vectorizer
+
     except Exception as e:
-        logger.error(f"Error loading model: {str(e)}")
-        raise
+        logger.error(f"Error loading models: {str(e)}")
+        raise Exception("Failed to load models. Please ensure model files exist in the correct location.")
 
 class Model:
     def __init__(self):
+        # Load the model and vectorizer on initialization
         self._model, self._vectorizer = load_models()
 
     def get_model(self):
