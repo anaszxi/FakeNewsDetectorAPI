@@ -37,8 +37,11 @@ logger = logging.getLogger(__name__)
 def get_new_news_from_api_and_update():
     """Gets news from the Guardian News using its API"""
     try:
+        logger.info("🔄 Fetching news from Guardian API...")
         service = GuardianNewsService()
         news_data = service.get_guardian_articles()
+
+        logger.info(f"📝 Raw API response: {news_data}")
 
         if not news_data or "response" not in news_data or "results" not in news_data["response"]:
             logger.error("❌ No news data received from API")
