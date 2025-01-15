@@ -13,125 +13,98 @@ from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
-from dateutil import parser
-logger = logging.getLogger(__name__)
-
-class RateLimitMixin:
-    _last_request_time = {}
-    _request_interval = 1.0  # 1 second between requests
-
-    def _wait_for_rate_limit(self):
-        current_time = time.time()
-        if self.__class__ in self._last_request_time:
-            time_since_last_request = current_time - self._last_request_time[self.__class__]
-            if time_since_last_request < self._request_interval:
-                time.sleep(self._request_interval - time_since_last_request)
-        self._last_request_time[self.__class__] = time.time()
-
-from dateutil import parser
-from django.utils import timezone
-import logging
 
 logger = logging.getLogger(__name__)
 
 def get_new_news_from_api_and_update():
-    """Gets news from the Guardian News using its API"""
-    try:
-        logger.info("🔄 Fetching news from Guardian API...")
-        service = GuardianNewsService()
-        news_data = service.get_guardian_articles()
+    """Gets news from the guardian news using it's API"""
+    news_data = requests.get("https://content.guardianapis.com/search?api-key=e705adff-ca49-414e-89e2-7edede919e2e")
+    news_data = news_data.json()
 
-        logger.info(f"📝 Raw API response: {news_data}")
+    news_titles = [article["webTitle"] for article in news_data["response"]["results"]]
+    news_publication_dates = [article["webPublicationDate"] for article in news_data["response"]["results"]]
+    news_categories = []
 
-        if not news_data or "response" not in news_data or "results" not in news_data["response"]:
-            logger.error("❌ No news data received from API")
-            return
+    for article in news_data["response"]["results"]:
+        try:
+            news_categories.append(article["pillarName"])
+        except KeyError:
+            news_categories.append("Undefined")
 
-        articles = news_data["response"]["results"]
-        logger.info(f"📢 Processing {len(articles)} articles from API")
+    section_id = [article["sectionId"] for article in news_data["response"]["results"]]
+    section_name = [article["sectionName"] for article in news_data["response"]["results"]]
+    type = [article["type"] for article in news_data["response"]["results"]]
+    web_url = [article["webUrl"] for article in news_data["response"]["results"]]
 
-        for article in articles:
+    nb_model, vect_model = load_models()
+
+    for i in range(len(news_titles)):
+        try:
+            title_ = news_titles[i]
+            publication_date_str = news_publication_dates[i]
+            
+            # Convert string to datetime with timezone
             try:
-                title = article.get("webTitle")
-                publication_date_str = article.get("webPublicationDate")
-                category = article.get("pillarName", "Undefined")
-                section_id = article.get("sectionId")
-                section_name = article.get("sectionName")
-                article_type = article.get("type")
-                web_url = article.get("webUrl")
-
-                if not title or not publication_date_str:
-                    logger.warning("⚠️ Skipping article due to missing title or date")
-                    continue
-
-                # Convert string to datetime
-                try:
-                    publication_date = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
-                    publication_date = timezone.make_aware(publication_date)
-                except ValueError:
-                    logger.error(f"❌ Invalid date format: {publication_date_str}")
-                    continue
-
-                # PostgreSQL Debugging: Check if the object exists before updating
-                existing_news = LiveNews.objects.filter(web_url=web_url).exists()
-                if existing_news:
-                    logger.info(f"🔄 Updating existing news: {title}")
-                else:
-                    logger.info(f"🆕 Creating new news: {title}")
-
-                # Create or update the news entry
-                result, created = LiveNews.objects.update_or_create(
-                    web_url=web_url,
-                    defaults={
-                        'title': title,
-                        'publication_date': publication_date,
-                        'news_category': category,
-                        'section_id': section_id,
-                        'section_name': section_name,
-                        'type': article_type
-                    }
-                )
-                logger.info(f"✅ News {'created' if created else 'updated'}: {title}")
-
-            except Exception as e:
-                logger.error(f"❌ Error processing article: {str(e)}")
+                publication_date_ = datetime.strptime(publication_date_str, '%Y-%m-%dT%H:%M:%SZ')
+                publication_date_ = timezone.make_aware(publication_date_)
+            except ValueError:
+                logger.error(f"Invalid date format: {publication_date_str}")
                 continue
+                
+            category_ = news_categories[i]
+            section_id_ = section_id[i]
+            section_name_ = section_name[i]
+            type_ = type[i]
+            web_url_ = web_url[i]
 
-    except Exception as e:
-        logger.error(f"❌ Unexpected error in get_new_news_from_api_and_update: {str(e)}")
+            if not LiveNews.objects.filter(web_url=web_url_).exists():
+                vectorized_text = vect_model.transform([title_])
+                prediction = nb_model.predict(vectorized_text)
+                prediction_bool = True if prediction[0] == 1 else False
 
+                img_url_ = scrap_img_from_web(web_url_)
+                
+                news_article = LiveNews(
+                    title=title_,
+                    publication_date=publication_date_,
+                    news_category=category_,
+                    prediction=prediction_bool,
+                    section_id=section_id_,
+                    section_name=section_name_,
+                    type=type_,
+                    web_url=web_url_,
+                    img_url=img_url_
+                )
+                news_article.save()
+        except Exception as e:
+            logger.error(f"Error processing article {i}: {str(e)}")
+            continue
 
 def scrap_img_from_web(url):
-    """Scrape image from article webpage."""
+    print(url)
+    r = requests.get(url)
+    if r.status_code != 200:
+        return "None"
+    web_content = r.content
+    soup = BeautifulSoup(web_content, 'html.parser')
     try:
-        r = requests.get(url, verify=self.cert_path)
-        if r.status_code != 200:
-            return "None"
-        web_content = r.content
-        soup = BeautifulSoup(web_content, 'html.parser')
-        try:
-            imgs = soup.find_all('article')[0].find_all('img', class_='dcr-evn1e9')
-            img_urls = []
-            for img in imgs:
-                src = img.get("src")
-                img_urls.append(src)
+        imgs = soup.find_all('article')[0].find_all('img', class_='dcr-evn1e9')
+        img_urls = []
+        for img in imgs:
+            src = img.get("src")
+            img_urls.append(src)
         
-            if not img_urls:
-                return "None"
-            return img_urls[0]
-        except:
+        if not img_urls:
             return "None"
-
-    except Exception as e:
-        logger.error(f"Error scraping image: {str(e)}")
+        return img_urls[0]
+    except:
         return "None"
 
 def auto_refresh_news():
-    """Auto refresh news from Guardian API with appropriate rate limiting"""
     get_new_news_from_api_and_update()
-    interval = 300  # 5 minutes interval
+    interval = 10
     while True:
-        logger.info("Refreshing news from Guardian API...")
+        print("Thread running!")
         get_new_news_from_api_and_update()
         time.sleep(interval)
 
@@ -143,12 +116,11 @@ auto_refresh_thread.start()
 # Initialize service for individual checks
 fake_news_service = GuardianNewsService()
 
-class LiveNewsPrediction(viewsets.ViewSet, RateLimitMixin):
+class LiveNewsPrediction(viewsets.ViewSet):
     http_method_names = ('get', 'post', )
 
     def list(self, request):
         """Handles GET request by displaying all newly retrieved in database."""
-        self._wait_for_rate_limit()
         # Get offset from query params, default to 0
         offset = int(request.query_params.get('offset', 0))
         limit = int(request.query_params.get('limit', 10))
@@ -168,7 +140,6 @@ class LiveNewsPrediction(viewsets.ViewSet, RateLimitMixin):
 
     def retrieve(self, request, pk=None):
         """Get specific news article by ID."""
-        self._wait_for_rate_limit()
         try:
             news_prediction = LiveNews.objects.get(pk=pk)
         except LiveNews.DoesNotExist:
@@ -177,10 +148,9 @@ class LiveNewsPrediction(viewsets.ViewSet, RateLimitMixin):
         serializer = LiveNewsDetailedSerializer(news_prediction)
         return Response(serializer.data)
 
-class LiveNewsByCategory(viewsets.ViewSet, RateLimitMixin):
+class LiveNewsByCategory(viewsets.ViewSet):
     def list(self, request):
         """Get menu of all available categories."""
-        self._wait_for_rate_limit()
         try:
             # Get unique categories from existing news articles
             categories = list(set(LiveNews.objects.values_list('news_category', flat=True)))
@@ -200,7 +170,6 @@ class LiveNewsByCategory(viewsets.ViewSet, RateLimitMixin):
 
     def retrieve(self, request, pk=None):
         """Get news articles for a specific category."""
-        self._wait_for_rate_limit()
         try:
             category_name = pk.replace('-', ' ')
             
@@ -233,12 +202,11 @@ class LiveNewsByCategory(viewsets.ViewSet, RateLimitMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
+class CheckByTitle(viewsets.ViewSet):
     """ViewSet for checking if a news title is fake or real."""
     
     def list(self, request):
         """Handle GET request to show API usage."""
-        self._wait_for_rate_limit()
         return Response({
             'status': 'success',
             'message': 'Use POST request with a title parameter to check news',
@@ -249,7 +217,6 @@ class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
     
     def create(self, request):
         """Check if a news title is fake or real."""
-        self._wait_for_rate_limit()
         title = request.data.get('title')
         
         if not title:
@@ -270,7 +237,7 @@ class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
                 'prediction': result['prediction'],
                 'confidence': result['confidence'],
                 'analysis': result['analysis']
-            }, status=status.HTTP_200_OK)
+            })
             
         except Exception as e:
             logger.error(f"Error predicting news: {str(e)}")
@@ -279,14 +246,13 @@ class CheckByTitle(viewsets.ViewSet, RateLimitMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
+class NewsViewSet(viewsets.ModelViewSet):
     queryset = LiveNews.objects.all()
     serializer_class = NewsSerializer
 
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Search news articles by query."""
-        self._wait_for_rate_limit()
         try:
             # Get search query and pagination parameters
             query = request.query_params.get('q', '')
@@ -329,7 +295,6 @@ class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
     @action(detail=False, methods=['post'])
     def analyze(self, request):
         """Analyze news article for fake news detection."""
-        self._wait_for_rate_limit()
         try:
             # Validate input
             title = request.data.get('title')
@@ -346,12 +311,25 @@ class NewsViewSet(viewsets.ModelViewSet, RateLimitMixin):
             
             return Response({
                 'status': 'success',
-                'result': result
+                'prediction': result['prediction'],
+                'confidence': f"{result['confidence']:.2%}",
+                'probabilities': {
+                    'fake': f"{result['probabilities']['fake']:.2%}",
+                    'real': f"{result['probabilities']['real']:.2%}"
+                },
+                'analysis': {
+                    'risk_score': f"{result['analysis']['risk_score']:.1f}/100",
+                    'patterns': {
+                        'caps_usage': result['analysis']['interpretation']['caps_usage'],
+                        'punctuation': result['analysis']['interpretation']['punctuation'],
+                        'sensationalism': result['analysis']['interpretation']['sensationalism'],
+                        'conspiracy_language': result['analysis']['interpretation']['conspiracy_language']
+                    }
+                }
             })
-
+            
         except Exception as e:
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
