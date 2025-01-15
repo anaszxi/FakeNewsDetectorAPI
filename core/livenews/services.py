@@ -77,34 +77,49 @@ class GuardianNewsService:
             logger.error(f"Error fetching from API: {str(e)}")
             return None
 
-    def get_guardian_articles(self):
-        """Get articles from The Guardian API"""
-        try:
-            params = {
-                'api-key': self.api_key,
-                'show-fields': 'bodyText',
-                'page-size': 10
-            }
-            response = self._make_request_with_retry(
-                "https://content.guardianapis.com/search",
-                params=params
-            )
-            if not response:
-                raise Exception("Failed to fetch articles after retries")
-            
-            data = response.json()
-            articles = []
-            for result in data['response']['results']:
-                articles.append({
-                    'url': result['webUrl'],
-                    'title': result['webTitle'],
-                    'text': result['fields']['bodyText']
-                })
-            return articles
-        except Exception as e:
-            logger.error(f"Error fetching Guardian articles: {str(e)}")
-            raise
+   def get_guardian_articles(self):
+    """Get articles from The Guardian API"""
+    try:
+        params = {
+            'api-key': self.api_key,
+            'show-fields': 'bodyText,thumbnail',
+            'page-size': 10
+        }
+        response = self._make_request_with_retry(
+            "https://content.guardianapis.com/search",
+            params=params
+        )
+        if not response:
+            raise Exception("Failed to fetch articles after retries")
 
+        data = response.json()
+        articles = []
+        for result in data['response']['results']:
+            # Convert date format
+            publication_date = result.get('webPublicationDate', None)
+            if publication_date:
+                try:
+                    publication_date = datetime.strptime(publication_date, '%Y-%m-%dT%H:%M:%SZ')
+                    publication_date = timezone.make_aware(publication_date)
+                except ValueError:
+                    logger.error(f"❌ Invalid date format: {publication_date}")
+                    publication_date = None
+
+            articles.append({
+                'title': result.get('webTitle', None),
+                'publication_date': publication_date,  # ✅ Fixed!
+                'news_category': result.get('pillarName', "Undefined"),  # ✅ Fixed!
+                'section_id': result.get('sectionId', None),
+                'section_name': result.get('sectionName', None),
+                'type': result.get('type', None),
+                'web_url': result.get('webUrl', None),
+                'img_url': result.get('fields', {}).get('thumbnail', None),  # ✅ Added Image!
+            })
+        return articles
+    except Exception as e:
+        logger.error(f"Error fetching Guardian articles: {str(e)}")
+        raise
+        
     def get_article_text(self, url):
         """Get article text from URL"""
         try:
