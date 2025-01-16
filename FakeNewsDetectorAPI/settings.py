@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'core',
     'core.livenews',
     'core.newsquiz',
+    'core.usercheckbytitle',
 ]
 
 
@@ -57,6 +58,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:19000",  # Expo Go for local testing
     "http://127.0.0.1:8000",  # Local Django server
     "https://169.254.130.2:8000",
+    "exp://192.168.1.30:8081",
+    "http://localhost:8081",
     "https://content.guardianapis.com",
     "https://fake-news-beta.azurewebsites.net",  # Azure web app
 ]
@@ -180,7 +183,7 @@ GUARDIAN_API_KEY = "727fdb63-5228-4461-b8fc-5f91d38ef824"
 
 # News settings
 NEWS_REFRESH_INTERVAL = 600  # 10 minutes
-NEWS_FETCH_LIMIT = 10
+NEWS_FETCH_LIMIT = 20
 
 # Timezone settings
 USE_TZ = True

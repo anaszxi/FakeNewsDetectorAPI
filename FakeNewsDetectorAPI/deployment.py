@@ -48,9 +48,11 @@ DATABASES = {
 SECURE_SSL_REDIRECT = True
 
 #CORS settings for your mobile app
-#CORS_ALLOWED_ORIGINS = [
-#   "https://fake-news-russ.azurewebsites.net",
-#]
+CORS_ALLOWED_ORIGINS = [
+   "https://fake-news-beta.azurewebsites.net",
+   "http://localhost:8081", 
+   "exp://192.168.1.30:8081",
+]
 
 # Cache settings
 CACHES = {

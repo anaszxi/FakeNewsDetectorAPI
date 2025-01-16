@@ -7,7 +7,7 @@ class UserCheckViewSet(viewsets.ViewSet):
     """Viewset to handle user checking other news."""
     http_method_names = ('post', )
     serializer_class = UserCheckSerializer
-    nb_model, vect_model = load_models()
+    model, vect_model = load_models()
 
     def create(self, request):
         """Get's news from user and returns predicted value."""
@@ -16,7 +16,7 @@ class UserCheckViewSet(viewsets.ViewSet):
             input_data = serializer.validated_data['user_news']
             input_data = [input_data]
             vectorized_text = self.vect_model.transform(input_data)
-            prediction = self.nb_model.predict(vectorized_text)
+            prediction = self.model.predict(vectorized_text)
             prediction_bool = True if prediction[0] == 1 else False
             
             response_data = {'prediction': prediction_bool}

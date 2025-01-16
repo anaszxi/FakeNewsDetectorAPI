@@ -1,11 +1,17 @@
 from django.db import models
 import random
+from core.model import load_models  # Import the Model class from model.py
+import numpy as np
 
+# Load the trained model and vectorizer once to avoid reloading for each request
+model_instance = load_models()
+trained_model, vectorizer = model_instance.get_model()
 
 class NewsQuizManager(models.Manager):
-    """A model manager to retrieve data from model."""
+    """A model manager to retrieve data from model and use AI model for predictions."""
+
     def get_random_news(self):
-        """Gets random news."""
+        """Gets random news from the database."""
         count = self.count()
         if count == 0:
             return None
@@ -13,15 +19,27 @@ class NewsQuizManager(models.Manager):
         return self.all()[random_index]
 
     def get_label_of_news(self, news_id):
-        """Get the label of news by it's id."""
+        """Get the label of a news article by its ID (database label)."""
         try:
-            return self.get(id=news_id)
+            news = self.get(id=news_id)
+            return news.label
         except self.model.DoesNotExist:
             return None
-        
+
+    def predict_news_label(self, news_text):
+        """Uses the trained model to predict if a news article is fake or real."""
+        if trained_model is None or vectorizer is None:
+            raise ValueError("Model or vectorizer is not loaded properly.")
+
+        # Transform text using vectorizer
+        news_vector = vectorizer.transform([news_text])
+
+        # Predict label (0 = Fake, 1 = Real)
+        prediction = trained_model.predict(news_vector)
+        return bool(prediction[0])  # Convert NumPy value to Python boolean
 
 class NewsQuizData(models.Model):
-    """A model to store news to generate quiz."""
+    """A model to store news articles for quiz generation."""
     news_title = models.CharField(max_length=2000)
     news_description = models.TextField()
     label = models.BooleanField()
@@ -30,4 +48,6 @@ class NewsQuizData(models.Model):
 
     def __str__(self):
         return self.news_title
+
     
+
