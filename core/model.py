@@ -3,8 +3,10 @@ import logging
 import os
 from django.conf import settings
 from sklearn import __version__ as sklearn_version
+from core.livenews.model_utils import download_model_from_blob
 
 logger = logging.getLogger(__name__)
+
 def load_models():
     """
     Load the trained model and vectorizer, ensuring compatibility with the current scikit-learn version.
@@ -33,15 +35,7 @@ def load_models():
         logger.info(f"Loaded model trained with scikit-learn version: {saved_version}")
 
         # Test the models with a sample prediction
-        test_text = "This is a test news article"
-        test_features = vectorizer.transform([test_text])
-        test_pred = model.predict(test_features)
-        test_prob = model.predict_proba(test_features)
 
-        logger.info("Model test results:")
-        logger.info(f"- Test prediction: {test_pred[0]}")
-        logger.info(f"- Test probability: {np.max(test_prob[0]):.2%}")
-        logger.info(f"- Vectorizer vocabulary size: {len(vectorizer.vocabulary_)}")
         logger.info("Successfully loaded and tested model")
         
         return model, vectorizer
