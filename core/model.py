@@ -1,4 +1,4 @@
-model.py:import pickle
+import pickle
 import logging
 import os
 import numpy as np
