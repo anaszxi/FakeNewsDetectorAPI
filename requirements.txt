@@ -18,7 +18,7 @@ python-dateutil==2.9.0.post0
 gunicorn==21.2.0
 whitenoise==6.6.0
 django-storages[azure]==1.14.2  # For Azure Storage
-azure-storage-blob==12.19.0  # For Azure Blob Storage
+azure-storage-blob==12.24.0  # For Azure Blob Storage
 python-decouple==3.8  # For environment variables
 certifi==2024.12.14
 psycopg2-binary==2.9.10
