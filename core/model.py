@@ -1,4 +1,4 @@
-import pickle
+model.py:import pickle
 import logging
 import os
 import numpy as np
@@ -41,8 +41,16 @@ def load_models():
             logger.warning(f"Version mismatch: Model trained with {saved_version}, "
                             f"current version is {current_version}")
         
+        # Test the models with a sample prediction
+        test_text = "This is a test news article"
+        test_features = vectorizer.transform([test_text])
+        test_pred = model.predict(test_features)
+        test_prob = model.predict_proba(test_features)
         
-       
+        logger.info("Model test results:")
+        logger.info(f"- Test prediction: {test_pred[0]}")
+        logger.info(f"- Test probability: {np.max(test_prob[0]):.2%}")
+        logger.info(f"- Vectorizer vocabulary size: {len(vectorizer.vocabulary_)}")
         logger.info("Successfully loaded and tested model")
         
         return model, vectorizer
