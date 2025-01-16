@@ -55,3 +55,4 @@ class Model:
         self._model, self._vectorizer = load_models()
 
     def get_model(self):
+        return self._model, self._vectorizer
