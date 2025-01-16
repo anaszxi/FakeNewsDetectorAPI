@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'core',
     'core.livenews',
     'core.newsquiz',
-    'core.usercheckbytitle',
 ]
 
 
@@ -183,7 +182,7 @@ GUARDIAN_API_KEY = "727fdb63-5228-4461-b8fc-5f91d38ef824"
 
 # News settings
 NEWS_REFRESH_INTERVAL = 600  # 10 minutes
-NEWS_FETCH_LIMIT = 20
+NEWS_FETCH_LIMIT = 10
 
 # Timezone settings
 USE_TZ = True
