@@ -5,7 +5,7 @@ import numpy as np
 
 # Load the trained model and vectorizer once to avoid reloading for each request
 model_instance = load_models()
-trained_model, vectorizer = model_instance.get_model()
+model, vectorizer = model_instance
 
 class NewsQuizManager(models.Manager):
     """A model manager to retrieve data from model and use AI model for predictions."""
@@ -28,14 +28,14 @@ class NewsQuizManager(models.Manager):
 
     def predict_news_label(self, news_text):
         """Uses the trained model to predict if a news article is fake or real."""
-        if trained_model is None or vectorizer is None:
+        if model is None or vectorizer is None:
             raise ValueError("Model or vectorizer is not loaded properly.")
 
         # Transform text using vectorizer
         news_vector = vectorizer.transform([news_text])
 
         # Predict label (0 = Fake, 1 = Real)
-        prediction = trained_model.predict(news_vector)
+        prediction = model.predict(news_vector)
         return bool(prediction[0])  # Convert NumPy value to Python boolean
 
 class NewsQuizData(models.Model):
@@ -48,6 +48,3 @@ class NewsQuizData(models.Model):
 
     def __str__(self):
         return self.news_title
-
-    
-

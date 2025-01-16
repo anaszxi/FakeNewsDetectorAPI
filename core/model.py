@@ -7,10 +7,7 @@ from sklearn import __version__ as sklearn_version
 logger = logging.getLogger(__name__)
 
 def load_models():
-    """
-    Load the trained model and vectorizer, ensuring compatibility with the current scikit-learn version.
-    If the model is not found locally, it will be downloaded from blob storage.
-    """
+    """Load the trained model and vectorizer."""
     try:
         logger.info("Loading model...")
 
@@ -29,20 +26,20 @@ def load_models():
 
         # Load the model
         with open(model_path, "rb") as f:
-            loaded_object = pickle.load(f)
+            model_info = pickle.load(f)
 
         # Determine if the loaded object is a dictionary (newer format) or a single model (older format)
-        if isinstance(loaded_object, dict):
+        if isinstance(model_info, dict):
             logger.info("Loaded object is a dictionary, extracting model and vectorizer...")
-            model = loaded_object.get("model")
-            vectorizer = loaded_object.get("vectorizer")
-            saved_version = loaded_object.get("sklearn_version", "unknown")
+            model = model_info.get("model")
+            vectorizer = model_info.get("vectorizer")
+            saved_version = model_info.get("sklearn_version", "unknown")
 
             if model is None:
                 raise ValueError("Model not found in the loaded dictionary.")
         else:
             logger.info("Loaded object is a single model (older format, without vectorizer).")
-            model = loaded_object
+            model = model_info
             vectorizer = None
             saved_version = "unknown"
 
