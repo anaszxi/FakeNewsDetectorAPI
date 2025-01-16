@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'core',
     'core.livenews',
     'core.newsquiz',
+    'core.usercheckbytitle',
 ]
 
 
@@ -103,7 +104,7 @@ TEMPLATES = [
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
 AZURE_STORAGE_CONTAINER_NAME = 'models'
 MODEL_BLOB_NAME = 'model_1_5_2.pkl'
-LOCAL_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model_1_5_2.pkl')
+LOCAL_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'nb_model.pkl')
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -182,7 +183,7 @@ GUARDIAN_API_KEY = "727fdb63-5228-4461-b8fc-5f91d38ef824"
 
 # News settings
 NEWS_REFRESH_INTERVAL = 600  # 10 minutes
-NEWS_FETCH_LIMIT = 10
+NEWS_FETCH_LIMIT = 20
 
 # Timezone settings
 USE_TZ = True

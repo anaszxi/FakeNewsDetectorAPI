@@ -22,10 +22,7 @@ def load_models():
         # Check if model exists locally, if not download it
         if not os.path.exists(settings.LOCAL_MODEL_PATH):
             logger.info("Model not found locally, downloading from blob storage...")
-            from core.livenews.model_utils import download_model_from_blob
-            if not download_model_from_blob():
-                raise Exception("Failed to download model from blob storage")
-        
+            
         # Load the model from the local path
         with open(settings.LOCAL_MODEL_PATH, 'rb') as f:
             model_info = pickle.load(f)
